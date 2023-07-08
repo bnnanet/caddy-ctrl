@@ -94,7 +94,7 @@ Caddy.add = function (config, site) {
                 },
                 upstreams: [
                   {
-                    "@id": `${myLxcId}__http_proxy_ip`,
+                    "@id": `${myLxcId}_http_proxy_ip`,
                     dial: `${site.internal_ip}:${site.internal_port}`,
                   },
                 ],
