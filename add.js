@@ -77,6 +77,16 @@ Caddy.add = function (config, site) {
     ],
   };
 
+  let proxyHost = site.hostname;
+  let proxyTransport;
+  if (site.https) {
+    proxyHost = site.internal_ip;
+    proxyTransport = {
+      protocol: "http",
+      tls: { insecure_skip_verify: true },
+    };
+  }
+
   let tlsHttpProxy = {
     "@id": `${myLxcId}_http_routing`,
     handle: [
@@ -87,14 +97,18 @@ Caddy.add = function (config, site) {
             handle: [
               {
                 handler: "reverse_proxy",
+
                 headers: {
                   request: {
-                    set: { Host: [site.hostname] },
+                    set: { Host: [proxyHost] },
                   },
                 },
+
+                transport: proxyTransport,
+
                 upstreams: [
                   {
-                    "@id": `${myLxcId}_http_proxy_ip`,
+                    "@id": `${myLxcId}_reverse_proxy_ip`,
                     dial: `${site.internal_ip}:${site.internal_port}`,
                   },
                 ],
