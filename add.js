@@ -2,10 +2,10 @@
 
 let Caddy = module.exports;
 
-Caddy.add = function (config, site) {
-  // srv443
-  let caddySrv = "srv443";
+// srv443
+let caddySrv = "srv443";
 
+Caddy.addTls = function (config, site) {
   let myLxcId = site.hostname.replace(/\./g, "_");
 
   let tlsPolicy = {
@@ -38,6 +38,16 @@ Caddy.add = function (config, site) {
   //     },
   //   ],
   // };
+
+  // per-domain tls policies
+  config.apps.tls.automation.policies.push(tlsPolicy);
+
+  // enables automatic renewal per tls policy
+  config.apps.tls.certificates.automate.push(site.hostname);
+};
+
+Caddy.addSshProxy = function (config, site) {
+  let myLxcId = site.hostname.replace(/\./g, "_");
 
   let tlsSshRouting = {
     "@id": `${myLxcId}_tls_routing`,
@@ -76,6 +86,15 @@ Caddy.add = function (config, site) {
       },
     ],
   };
+
+  // enable ssh tls routing
+  config.apps.http.servers[caddySrv].listener_wrappers[0].routes[0].handle.push(
+    tlsSshRouting
+  );
+};
+
+Caddy.addHttpProxy = function (config, site) {
+  let myLxcId = site.hostname.replace(/\./g, "_");
 
   let proxyHost = site.hostname;
   let proxyTransport;
@@ -121,17 +140,6 @@ Caddy.add = function (config, site) {
     match: [{ host: [site.hostname] }],
     terminal: true,
   };
-
-  // per-domain tls policies
-  config.apps.tls.automation.policies.push(tlsPolicy);
-
-  // enables automatic renewal per tls policy
-  config.apps.tls.certificates.automate.push(site.hostname);
-
-  // enable ssh tls routing
-  config.apps.http.servers[caddySrv].listener_wrappers[0].routes[0].handle.push(
-    tlsSshRouting
-  );
 
   // enable http proxy
   config.apps.http.servers[caddySrv].routes.push(tlsHttpProxy);
