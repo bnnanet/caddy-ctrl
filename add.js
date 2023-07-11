@@ -46,10 +46,6 @@ Caddy.addTls = function (config, site) {
 };
 
 Caddy.addSshProxy = function (config, site) {
-  if (!site.internal_ip) {
-    return;
-  }
-
   let myLxcId = site.hostname.replace(/\./g, "_");
 
   let tlsSshRouting = {
@@ -63,32 +59,37 @@ Caddy.addSshProxy = function (config, site) {
             connection_policies: [{ alpn: ["http/1.1"] }],
             handler: "tls",
           },
-          {
-            handler: "subroute",
-            routes: [
-              {
-                match: [{ http: [{ host: [site.hostname] }] }],
-              },
-              {
-                match: [{ ssh: {} }],
-                handle: [
-                  {
-                    handler: "proxy",
-                    upstreams: [
-                      {
-                        "@id": `${myLxcId}_tls_proxy_ip`,
-                        dial: [`${site.internal_ip}:22`],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
         ],
       },
     ],
   };
+
+  if (site.internal_ip) {
+    let sshProxy = {
+      handler: "subroute",
+      routes: [
+        {
+          match: [{ http: [{ host: [site.hostname] }] }],
+        },
+        {
+          match: [{ ssh: {} }],
+          handle: [
+            {
+              handler: "proxy",
+              upstreams: [
+                {
+                  "@id": `${myLxcId}_tls_proxy_ip`,
+                  dial: [`${site.internal_ip}:22`],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    tlsSshRouting.routes[0].handle.push(sshProxy);
+  }
 
   // enable ssh tls routing
   config.apps.http.servers[SRV_443].listener_wrappers[0].routes[0].handle.push(
