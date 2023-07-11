@@ -192,10 +192,15 @@ Caddy.addHttpProxy = function (config, site) {
     matchHostnameAndHandle.handle[0].routes.push(matchDefaultAndProxyRoute);
   }
 
-  if (site.static_root) {
+  if (site.static_path) {
     let staticPath = site.static_path;
     if (!staticPath) {
       staticPath = "/*";
+    }
+
+    let staticRoot = site.static_root;
+    if (!staticRoot) {
+      staticRoot = `/srv/www/${site.hostname}/`;
     }
 
     let matchStaticRoot = {
@@ -209,7 +214,7 @@ Caddy.addHttpProxy = function (config, site) {
           handler: "vars",
           // ex: "/home/app/dist/";
           // (should end in '/')
-          root: `/home/app/srv/${site.hostname}/`,
+          root: staticRoot,
         },
         {
           handler: "file_server",
