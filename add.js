@@ -218,7 +218,7 @@ Caddy.addHttpProxy = function (config, site) {
       ],
     };
 
-    matchHostnameAndHandle.handle[0].routes[0].push(matchStaticRoot);
+    matchHostnameAndHandle.handle[0].routes.push(matchStaticRoot);
   }
 
   // enable http proxy
