@@ -46,6 +46,10 @@ Caddy.addTls = function (config, site) {
 };
 
 Caddy.addSshProxy = function (config, site) {
+  if (!site.internal_ip) {
+    return;
+  }
+
   let myLxcId = site.hostname.replace(/\./g, "_");
 
   let tlsSshRouting = {
