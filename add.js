@@ -227,6 +227,30 @@ Caddy.addHttpProxy = function (config, site) {
     matchHostnameAndHandle.handle[0].routes.push(matchStaticRoot);
   }
 
+  if (site.redirect_location) {
+    let redirectPath = site.redirect_path;
+    if (!redirectPath) {
+      redirectPath = "/*";
+    }
+
+    let staticRedirect = {
+      match: [{ path: [redirectPath] }],
+      terminal: true,
+      handle: [
+        {
+          handler: "static_response",
+          headers: {
+            // ex: "https://www.{http.request.host}{http.request.uri}"
+            Location: [site.redirect_location],
+          },
+          status_code: 302,
+        },
+      ],
+    };
+
+    matchHostnameAndHandle.handle[0].routes.push(staticRedirect);
+  }
+
   // enable http proxy
   config.apps.http.servers[SRV_443].routes.push(matchHostnameAndHandle);
 };
