@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+set -u
+
+my_file="${1:-}"
+if test -z "${my_file}"; then
+	echo >&2 ""
+	echo >&2 "USAGE"
+	echo >&2 "    caddy-load ./caddy.json"
+	echo >&2 ""
+	exit 1
+fi
+
+echo "start loading"
+curl -X POST "http://localhost:2019/load" \
+	-H "Content-Type: application/json" \
+	-d @"${my_file}"
+echo "done loading"
