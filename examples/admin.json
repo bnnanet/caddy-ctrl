@@ -1,0 +1,5 @@
+{
+  "debug_level": "INFO",
+  "hostname": "caddy-admin.example.com",
+  "internal_ip": "123.123.123.123"
+}

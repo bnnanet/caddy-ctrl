@@ -1,0 +1,38 @@
+[
+  {
+    "hostname": "pve1.m.example.net",
+    "internal_ip": "192.168.0.101",
+    "internal_port": "8006",
+    "internal_https": true,
+    "internal_tls_skip_verify": true,
+    "_proxy_path": "/*"
+  },
+  {
+    "hostname": "opn1.m.example.net",
+    "internal_ip": "192.168.0.1",
+    "internal_port": "8443",
+    "internal_https": true,
+    "internal_tls_skip_verify": true,
+    "_proxy_path": "/*"
+  },
+  {
+    "hostname": "ex1.1001.c.example.net",
+    "internal_ip": "10.0.1.101",
+    "internal_port": "3080",
+    "_proxy_path": "/*"
+  },
+  {
+    "hostname": "hello.example.dev",
+    "internal_ip": "10.0.2.101",
+    "internal_port": "3080",
+    "_proxy_path": "/*"
+  },
+  {
+    "hostname": "www.example.com",
+    "redirect_location": "https://example.com{http.request.uri}"
+  },
+  {
+    "hostname": "example.com",
+    "static_path": "/*"
+  }
+]
