@@ -34,5 +34,19 @@
   {
     "hostname": "example.com",
     "static_path": "/*"
+  },
+  {
+    "hostname": "*example.net",
+    "static_path": "/*",
+    "dns_provider": {
+      "name": "namedotcom",
+      "server": "https://api.name.com",
+      "user": "xxxxxxxxxxxx",
+      "api_token": "****************************************"
+    }
+  },
+  {
+    "hostname": "example.net",
+    "redirect_location": "https://app.example.net{http.request.uri}"
   }
 ]
