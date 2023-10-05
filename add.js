@@ -3,6 +3,7 @@
 let Caddy = module.exports;
 
 const SRV_443 = "srv443";
+const WILD_PREFIX = "*.";
 
 Caddy.addTls = function (config, site) {
   let myLxcId = site.hostname.replace(/\./g, "_");
@@ -12,37 +13,64 @@ Caddy.addTls = function (config, site) {
     subjects: [site.hostname],
   };
 
-  // // See https://github.com/caddy-dns/lego-deprecated/
-  // // (there's nothing at https://caddyserver.com/docs/modules/dns.providers.lego_deprecated)
-  //
-  // let tlsPolicy = {
-  //   "@id": `${myLxcId}_tls_policy`,
-  //   subjects: [site.hostname],
-  //   issuers: [
-  //     {
-  //       challenges: {
-  //         dns: {
-  //           provider: { api_token: "{env.DUCKDNS_API_TOKEN}", name: "duckdns" },
-  //         },
-  //       },
-  //       module: "acme",
-  //     },
-  //     {
-  //       challenges: {
-  //         dns: {
-  //           provider: { api_token: "{env.DUCKDNS_API_TOKEN}", name: "duckdns" },
-  //         },
-  //       },
-  //       module: "zerossl",
-  //     },
-  //   ],
-  // };
+  let isWild = site.hostname.startsWith(WILD_PREFIX);
+  if (isWild) {
+    let bare = site.hostname.slice(WILD_PREFIX.length);
+    tlsPolicy.subjects.unshift(bare);
+  }
 
-  // per-domain tls policies
-  config.apps.tls.automation.policies.push(tlsPolicy);
+  if (site.dns_provider) {
+    if (site.dns_provider.token) {
+      console.warn();
+      console.warn(`[WARN] '${site.hostname}'s`);
+      console.warn(
+        `[WARN] 'dns_provider.token' should probably be 'dns_provider.api_token'`
+      );
+      console.warn(
+        "       (this is a difference between the Caddyfile and JSON config)"
+      );
+      console.warn();
+    }
+    // See https://github.com/caddy-dns/lego-deprecated/
+    // (there's nothing at https://caddyserver.com/docs/modules/dns.providers.lego_deprecated)
+    tlsPolicy.issuers = [
+      {
+        challenges: {
+          dns: { provider: site.dns_provider },
+        },
+        module: "acme",
+      },
+      {
+        challenges: {
+          dns: { provider: site.dns_provider },
+        },
+        module: "zerossl",
+      },
+    ];
+  }
+
+  let hasPolicy = false;
 
   // enables automatic renewal per tls policy
-  config.apps.tls.certificates.automate.push(site.hostname);
+  for (let domain of tlsPolicy.subjects) {
+    let hasDomain = config.apps.tls.certificates.automate.includes(domain);
+    if (!hasDomain) {
+      config.apps.tls.certificates.automate.push(domain);
+      continue;
+    }
+
+    hasPolicy = true;
+    if (tlsPolicy.subjects.length >= 2) {
+      throw new Error(
+        `duplicate tls policy for '${domain}':\n    wildcards must come before bare domains`
+      );
+    }
+  }
+
+  if (!hasPolicy) {
+    // per-domain tls policies
+    config.apps.tls.automation.policies.push(tlsPolicy);
+  }
 };
 
 Caddy.addSshProxy = function (config, site) {
@@ -146,7 +174,8 @@ Caddy.addHttpProxy = function (config, site) {
   };
 
   if (site.internal_port) {
-    let proxyHost = site.hostname;
+    // let proxyHost = site.hostname;
+    let proxyHost = "{http.request.tls.server_name}";
     let proxyTransport;
     if (site.internal_https) {
       let insecureSkipVerify = false !== site.internal_tls_skip_verify;
